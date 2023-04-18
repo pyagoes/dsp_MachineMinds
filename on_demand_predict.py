@@ -1,7 +1,12 @@
-import streamlit as st
+kimport streamlit as st
+import requests
+
+# Define the API endpoint URL
+url = "http://127.0.0.1:8000/predict"
 
 # Title
 st.title("OnDemand Predictions WebApp")
+
 # Text
 st.write("This is the WebApp for the user to make past predictions")
 
@@ -22,18 +27,6 @@ uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
 # Trigger API request on submit
 if submit_button:
-    # Call the API endpoint with the entered feature values
-    # and process the prediction response
-    # (e.g., display the predicted output to the user)
-    prediction = make_prediction(feature1, feature2, feature3, feature4, feature5)
-    st.write("Prediction:", prediction)
-
-import requests
-
-def make_prediction(feature1, feature2, feature3, feature4, feature5):
-    # Define the API endpoint URL
-    url = "http://127.0.0.1:8000/predict"
-
     # Define the feature values
     features = {
         "feature1": feature1,
@@ -50,7 +43,9 @@ def make_prediction(feature1, feature2, feature3, feature4, feature5):
     if response.status_code == 200:
         # Parse the response data
         prediction = response.json()["prediction"]
-        return prediction
+        # Display the prediction to the user
+        st.write("Prediction:", prediction)
     else:
         # Handle the error
-        return "Error: Failed to get prediction from the API endpoint."
+        st.write("Error: Failed to get prediction from the API endpoint.")
+
