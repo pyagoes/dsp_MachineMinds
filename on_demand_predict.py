@@ -30,27 +30,27 @@ if submit_button:
 
 import requests
 
-# Define the API endpoint URL
-url = "http://127.0.0.1:8000/predict"
+def make_prediction(feature1, feature2, feature3, feature4, feature5):
+    # Define the API endpoint URL
+    url = "http://127.0.0.1:8000/predict"
 
-# Define the feature values
-features = {
-    "feature1": 0.5,
-    "feature2": 1.0,
-    "feature3": 0.8
-}
+    # Define the feature values
+    features = {
+        "feature1": feature1,
+        "feature2": feature2,
+        "feature3": feature3,
+        "feature4": feature4,
+        "feature5": feature5
+    }
 
-# Send a POST request to the API endpoint with the feature values
-response = requests.post(url, json=features)
+    # Send a POST request to the API endpoint with the feature values
+    response = requests.post(url, json=features)
 
-# Check if the request was successful (status code 200)
-if response.status_code == 200:
-    # Parse the response data
-    prediction = response.json()["prediction"]
-    # Display the prediction to the user
-    print(f"Prediction: {prediction}")
-else:
-    # Handle the error
-    print("Error: Failed to get prediction from the API endpoint.")
-
-
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the response data
+        prediction = response.json()["prediction"]
+        return prediction
+    else:
+        # Handle the error
+        return "Error: Failed to get prediction from the API endpoint."
