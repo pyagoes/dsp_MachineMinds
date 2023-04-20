@@ -54,7 +54,16 @@ async def save_data(source : str, features : ModelFeatures):
     feature4 = features.feature4
     feature5 = features.feature5
     prediction = 42
-    prediction_db = Prediction(feature1, feature2, feature3, feature4, feature5,prediction_date,source,prediction)
+    prediction_db = Prediction(
+        feature1 = feature1,
+        feature2 = feature2,
+        feature3 = feature3,
+        feature4 = feature4,
+        feature5 = feature5,
+        prediction_date = prediction_date,
+        source = source,
+        prediction = prediction
+        )
     session = Session()
     session.add(prediction_db)
     session.commit()
