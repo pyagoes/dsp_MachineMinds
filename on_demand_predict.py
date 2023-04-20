@@ -21,12 +21,15 @@ with st.form("Single Sample Prediction"):
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
 # Trigger API request on submit or file upload
-if submit_button or uploaded_file is not None:
+# Option 1: the users enters values manually
+if submit_button:
+    # Option 2: the user uploads a CSV	
     if uploaded_file is not None:
+    
         # Read the uploaded CSV file into a DataFrame
         df = pd.read_csv(uploaded_file)
-        # Send a POST request to the API endpoint with the DataFrame
-        response = requests.post("http://127.0.0.1:8000/predict", json=df.to_json(orient="records"))
+        features = df.to_dict(orient="records")[0]
+        
     else:
         # Define the feature values
         features = {
@@ -36,16 +39,23 @@ if submit_button or uploaded_file is not None:
             "feature4": feature4,
             "feature5": feature5
         }
-        # Send a POST request to the API endpoint with the feature values
-        response = requests.post("http://127.0.0.1:8000/predict", json=features)
+     
+     # Send a POST request to the API endpoint with the feature values
+    response = requests.post("http://127.0.0.1:8070/predict", json=features)
+        
+    # call the endpoint in the API to save predictions 
+    # Send a POST request to the save endpoint with the feature values and source
+    #save_response = requests.post(f"http://127.0.0.1:8070/save/webapp", json=features)
     
     # Check if the request was successful (status code 200)
     if response.status_code == 200:
         # Parse the response data
-        prediction = response.json()["prediction"]
+        prediction = response.json()
         # Display the prediction to the user
         st.write("Prediction:", prediction)
     else:
         # Handle the error
         st.write("Error: Failed to get prediction from the API endpoint.")
+
+
 
