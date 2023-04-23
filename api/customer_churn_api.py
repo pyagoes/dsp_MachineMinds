@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, DateTime, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 
@@ -12,7 +12,7 @@ import pandas as pd
 app = FastAPI(description = "Telco-Customer-churn-API", version = "0.1")
 
 # configure the db connection and session
-engine = create_engine('postgresql://paulayagoesparza:password@localhost:5432/customer_churn')
+engine = create_engine('postgresql://MachineMinds:MachineMinds@localhost:5432/customer_churn')
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
@@ -20,26 +20,26 @@ Base = declarative_base()
 class Prediction(Base):
     __tablename__ = 'predictions'
     id = Column(Integer, primary_key=True)
-    customer_id: Column(String)
-    gender: Column(String)
-    senior_citizen: Column(Integer)
-    partner: Column(String)
-    dependents: Column(String)
-    tenure: Column(Integer)
-    phone_service: Column(String)
-    multiple_lines: Column(String)
-    internet_service: Column(String)
-    online_security: Column(String)
-    online_backup: Column(String)
-    device_protection: Column(String)
-    tech_support: Column(String)
-    streaming_tv: Column(String)
-    streaming_movies: Column(String)
-    contract: Column(String)
-    paperless_billing: Column(String)
-    payment_method: Column(String)
-    monthly_charges: Column(Float)
-    total_charges: Column(Float)
+    customer_id = Column(String)
+    gender = Column(String)
+    senior_citizen = Column(Integer)
+    partner = Column(String)
+    dependents = Column(String)
+    tenure = Column(Integer)
+    phone_service = Column(String)
+    multiple_lines = Column(String)
+    internet_service = Column(String)
+    online_security = Column(String)
+    online_backup = Column(String)
+    device_protection = Column(String)
+    tech_support = Column(String)
+    streaming_tv = Column(String)
+    streaming_movies = Column(String)
+    contract = Column(String)
+    paperless_billing = Column(String)
+    payment_method = Column(String)
+    monthly_charges = Column(Float)
+    total_charges = Column(Float)
     prediction_date = Column(DateTime)
     source = Column(String)
     prediction = Column(Float)
@@ -94,27 +94,32 @@ async def make_predictions(features: Union[ModelFeatures, list], source : str):
     return prediction_df
 
 def save_to_db(source, raw_df, prediction_result):
-    prediction_db = Prediction(customer_id = raw_df["customerID"], gender = raw_df["genre"], 
-                                senior_citizen = raw_df["SeniorCitizen"], partner = raw_df["Partner"],
-                                dependents = raw_df["Dependents"], tenure = raw_df["tenure"],
-                                phone_service = raw_df["PhoneService"], multiple_lines = raw_df["MultipleLines"],
-                                internet_service = raw_df["InternetService"], online_security = raw_df["OnlineSecurity"],
-                                online_backup = raw_df["OnlineBackup"], device_protection = raw_df["DeviceProtection"],
-                                tech_support = raw_df["TechSupport"], streaming_tv = raw_df["StreamingTV"],
-                                streaming_movies = raw_df["StreamingMovies"], contract = raw_df["Contract"],
-                                paperless_billing = raw_df["PaperlessBilling"], payment_method = raw_df["PaymentMethod"],
-                                monthly_charges = raw_df["MonthlyCharges"], total_charges = raw_df["TotalCharges"],
-                                prediction_date = datetime.utcnow(), source = source, prediction = prediction_result
-                                )
+    raw_df["PredictionDate"] = datetime.utcnow()
+    raw_df["Source"] = source
+    raw_df["Prediction"] = prediction_result
     session = Session()
-    session.add(prediction_db)
-    session.commit()
+    for _,row in raw_df.iterrows():   
+        prediction_db = Prediction(customer_id = row["customerID"], gender = row["gender"], 
+                                senior_citizen = row["SeniorCitizen"], partner = row["Partner"],
+                                dependents = row["Dependents"], tenure = row["tenure"],
+                                phone_service = row["PhoneService"], multiple_lines = row["MultipleLines"],
+                                internet_service = row["InternetService"], online_security = row["OnlineSecurity"],
+                                online_backup = row["OnlineBackup"], device_protection = row["DeviceProtection"],
+                                tech_support = row["TechSupport"], streaming_tv = row["StreamingTV"],
+                                streaming_movies = row["StreamingMovies"], contract = row["Contract"],
+                                paperless_billing = row["PaperlessBilling"], payment_method = row["PaymentMethod"],
+                                monthly_charges = row["MonthlyCharges"], total_charges = row["TotalCharges"],
+                                prediction_date = row["PredictionDate"], source = row["Source"], 
+                                prediction = row["Prediction"]
+                                )
+    
+        session.add(prediction_db)
+        session.commit()
     session.close()
 
 # Define a function to convert a Prediction object to a dictionary
 def prediction_to_dict(prediction):
-    return {'senior_citizen' : prediction.senior_citizen, 'tenure' : prediction.tenure,
-            'monthly_charges' : prediction.monthly_charges, 'total_charges' : prediction.total_charges,
+    return {'monthly_charges' : prediction.monthly_charges, 'total_charges' : prediction.total_charges,
             'prediction_date': prediction.prediction_date, 'source': prediction.source, 
             'prediction': prediction.prediction
             }
@@ -127,12 +132,13 @@ async def get_past_predictions(start_date : str, end_date : str, prediction_sour
     session = Session()
     if prediction_source != "all":
         past_predictions = session.query(Prediction).filter(Prediction.prediction_date >= start_datetime, 
-                                                            Prediction.prediction_date <= end_datetime,
+                                                            Prediction.prediction_date < end_datetime + timedelta(days = 1),
                                                             Prediction.source == prediction_source).all()
     else:
         past_predictions = session.query(Prediction).filter(Prediction.prediction_date >= start_datetime, 
-                                                            Prediction.prediction_date <= end_datetime).all()
+                                                            Prediction.prediction_date < end_datetime + timedelta(days = 1)).all()
 
     past_predictions_dicts = [prediction_to_dict(prediction) for prediction in past_predictions]
     session.close()
     return {'past_predictions': past_predictions_dicts}
+
