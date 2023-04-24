@@ -5,7 +5,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-
 # initiate FastAPI
 app = FastAPI(description = "Telco-Customer-churn-API", version = "0.1")
 
@@ -15,7 +14,7 @@ Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
 # On-demand prediction endpoint
-
+# list of objects, not only one row
 class ModelFeatures(BaseModel):
     feature1: float   
     feature2: float  
@@ -24,28 +23,10 @@ class ModelFeatures(BaseModel):
     feature5: float 
 
 @app.post("/predict/")
-async def make_predictions(features: ModelFeatures):
-    return 42
-
-
-# Save model predictions, used features, prediction date and source in the database
-
-# Define the table schema to store data
-class Prediction(Base):
-    __tablename__ = 'predictions'
-    id = Column(Integer, primary_key=True)
-    feature1 = Column(Float)
-    feature2 = Column(Float)
-    feature3 = Column(Float)
-    feature4 = Column(Float)
-    feature5 = Column(Float)
-    prediction_date = Column(DateTime)
-    source = Column(String)
-    prediction = Column(Float) 
-
-# create the save to db enpoint
-@app.post("/save/{source}")
-async def save_data(source : str, features : ModelFeatures):
+# change name
+async def make_predictions(source: str, features: ModelFeatures):
+    # get_pre is the model 
+    predictions = 42
     prediction_date = datetime.utcnow()
     source = source
     feature1 = features.feature1
@@ -68,7 +49,55 @@ async def save_data(source : str, features : ModelFeatures):
     session.add(prediction_db)
     session.commit()
     session.close()
-    return "the data is saved in the db" 
+    # add save to db 
+    return 42
+
+# create the save to db enpoint
+# add source in predict 
+# refactor !!
+#@app.post("/save/{source}")
+# async def save_data(source : str, features : ModelFeatures):
+#     prediction_date = datetime.utcnow()
+#     source = source
+#     feature1 = features.feature1
+#     feature2 = features.feature2
+#     feature3 = features.feature3
+#     feature4 = features.feature4
+#     feature5 = features.feature5
+#     prediction = 42
+#     prediction_db = Prediction(
+#         feature1 = feature1,
+#         feature2 = feature2,
+#         feature3 = feature3,
+#         feature4 = feature4,
+#         feature5 = feature5,
+#         prediction_date = prediction_date,
+#         source = source,
+#         prediction = prediction
+#         )
+#     session = Session()
+#     session.add(prediction_db)
+#     session.commit()
+#     session.close()
+#     return "the data is saved in the db" 
+
+
+# Save model predictions, used features, prediction date and source in the database
+
+# Define the table schema to store data
+class Prediction(Base):
+    __tablename__ = 'predictions'
+    id = Column(Integer, primary_key=True)
+    feature1 = Column(Float)
+    feature2 = Column(Float)
+    feature3 = Column(Float)
+    feature4 = Column(Float)
+    feature5 = Column(Float)
+    prediction_date = Column(DateTime)
+    source = Column(String)
+    prediction = Column(Float) 
+
+
 
 # query the database for past prediction
 
@@ -89,5 +118,6 @@ async def get_past_predictions(start_date : str, end_date : str):
     past_predictions = session.query(Prediction).filter(Prediction.prediction_date >= start_datetime, Prediction.prediction_date <= end_datetime).all()
     past_predictions_dicts = [prediction_to_dict(prediction) for prediction in past_predictions]
     session.close()
+    # filter on the source 
     return {'past_predictions': past_predictions_dicts}
  
