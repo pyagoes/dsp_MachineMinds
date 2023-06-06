@@ -1,0 +1,1 @@
+In this folder we store the files that are ready for process and prediction
