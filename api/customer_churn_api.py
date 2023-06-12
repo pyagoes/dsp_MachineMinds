@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 import pandas as pd
-
+import joblib
 
 # initiate FastAPI
 app = FastAPI(description = "Telco-Customer-churn-API", version = "0.1")
@@ -15,6 +15,14 @@ app = FastAPI(description = "Telco-Customer-churn-API", version = "0.1")
 engine = create_engine('postgresql://MachineMinds:MachineMinds@localhost:5432/customer_churn')
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
+
+# model
+def telco_churn_pred(data):
+    scaler = joblib.load("scaler.joblib")
+    classifier = joblib.load("model.joblib")
+    data_scaled = scaler.transform(data)
+    y_pred = classifier.predict(data_scaled)
+    return y_pred.astype(float)
 
 # Define the table schema to store data
 class Prediction(Base):
@@ -74,7 +82,7 @@ async def make_predictions(features: Union[ModelFeatures, list], source : str):
     if isinstance(features,ModelFeatures):
         raw_df = pd.DataFrame.from_dict(features.dict(), orient="index").T
         prediction_df = raw_df.loc[:, ["SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges"]]
-        prediction_result = 42.0
+        prediction_result = telco_churn_pred(prediction_df)
         prediction_df["prediction"] = prediction_result
     if isinstance(features, list):
         raw_df = pd.DataFrame(features)
@@ -85,7 +93,7 @@ async def make_predictions(features: Union[ModelFeatures, list], source : str):
         # Slice the prediction_df  
         prediction_df = prediction_df.loc[:, ["SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges"]]
         # add column predictions
-        prediction_result = 42.0 #this value will be replaced after by our model result
+        prediction_result = telco_churn_pred(prediction_df)
         prediction_df["predictions"] = prediction_result
 
     # Save model predictions, used features, prediction date and source in the database
