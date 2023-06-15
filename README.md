@@ -20,7 +20,7 @@ This project is aimed at predicting customer churn for a telco company using mac
 
 To set up and run the Telco Churn Prediction Application, follow these steps:
 
-1. Clone the project repository from [GitHub link](https://github.com/your-username/repo-name).
+1. Clone the project repository from [GitHub link](https://github.com/pyagoes/dsp_MachineMinds.git).
 
 2. Install the required dependencies by running the following command:
 
